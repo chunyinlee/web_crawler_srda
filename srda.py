@@ -38,6 +38,7 @@ while page <= 5:
         df = df.append(s, ignore_index=True)
 
     page += 1
+#df.to_html("./url.html", index = False)
 
 #進入每個資料庫
 head = "https://srda.sinica.edu.tw/"
