@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.error import HTTPError 
 import pandas as pd
+import time
 #for mac users 告訴電腦ssl加密是有效的
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -28,7 +29,7 @@ while page <= 5:
     )
     print("現在處理的頁碼", page)
 
-    html = BeautifulSoup(url.text)
+    html = BeautifulSoup(url.text, "html.parser")
 
     for r in html.find_all("div", class_ = "search-resulr--info"):
         a = r.find("a")
@@ -42,7 +43,7 @@ while page <= 5:
 head = "https://srda.sinica.edu.tw/"
 df2 = pd.DataFrame(columns=["資料使用說明_中", "問卷_中", "過錄編碼簿_中", "報告書_中"]) 
 df3 = pd.DataFrame(columns=["資料使用說明_英", "問卷_中", "過錄編碼簿_英"])
-
+df4 = pd.DataFrame(columns=["檔名", "url"])
 for id in df['data_id']:
     url = requests.post(
         "https://srda.sinica.edu.tw/datasearch_detail.php",
@@ -54,28 +55,15 @@ for id in df['data_id']:
             "id" : id
         }
     )
-    html = BeautifulSoup(url.text)
+    html = BeautifulSoup(url.text, "html.parser")
 
-    for con_c in html.find("div", class_ = "block-1"):
-        con_c.extract()
-    for con_c in html.find("div", class_ = "block-1"):
-        con_c.extract()
-    for con_c in html.find("div", class_ = "block-1"):
-        con_c.extract()
-    for con_c in html.find("div", class_ = "block-1"):
-        print(con_c)
-        '''
-        a = con_c.find_all("a")      
-        s2 = pd.Series([head + a["href"][0], head + a["href"][1],
-                       head + a["href"][2], head + a["href"][3]],
-                       index = ["survey_name", "url", "data_id"])
-        df2 = df2.append(s2, ignore_index=True)
-        print(df2)
-        a = con_c[4].find_all("a")      
-        s3 = pd.Series([head + a["href"][0], head + a["href"][1],
-                       head + a["href"][2], head + a["href"][3]],
-                       index = ["survey_name", "url", "data_id"])
-        df3 = df3.append(s3, ignore_index=True)
-        '''
-#print(df2.head(5))
-#df.to_html("./final.html", index = False)
+    for con_c in html.find_all("div", class_ = "content"):
+        for blocks in con_c.find_all("div", class_ = "block-1"):
+            for l in  blocks.find_all("dl", class_ = "browser_detail_content_dl"):
+                for a in l.find_all("a"):
+                    if "freedownload" in a["href"]:
+                        s4 = pd.Series([a.text, head + a["href"]],
+                                        index = ["檔名", "url"])
+                        df4 = df4.append(s4, ignore_index=True)
+#print(df4)
+df4.to_html("./MS_pdf_url.html", index = False)
